@@ -1,0 +1,98 @@
+type Query {
+    """
+    Return all posts.
+    depth controls how many levels of referenced documents are populated
+    (0 = IDs only, 1 = direct relations, 2 = nested relations, …).
+    Defaults to 1.
+    """
+    posts(depth: Int = 1): [Post!]!
+
+    """Return a single post by ID."""
+    post(id: ID!, depth: Int = 1): Post
+
+    """Return all authors."""
+    authors(depth: Int = 1): [Author!]!
+
+    """Return a single author by ID."""
+    author(id: ID!, depth: Int = 1): Author
+
+    """Return all categories."""
+    categories(depth: Int = 1): [Category!]!
+
+    """Return a single category by ID."""
+    category(id: ID!, depth: Int = 1): Category
+}
+
+type Mutation {
+    createPost(input: PostInput!): Post!
+    updatePost(id: ID!, input: PostInput!): Post
+    deletePost(id: ID!): Boolean!
+
+    createAuthor(input: AuthorInput!): Author!
+    updateAuthor(id: ID!, input: AuthorInput!): Author
+    deleteAuthor(id: ID!): Boolean!
+
+    createCategory(input: CategoryInput!): Category!
+    updateCategory(id: ID!, input: CategoryInput!): Category
+    deleteCategory(id: ID!): Boolean!
+}
+
+"""A blog post stored in MongoDB."""
+type Post {
+    id: ID!
+    title: String!
+    content: String
+
+    """Raw reference ID – always present."""
+    authorId: String
+
+    """
+    Resolved Author document.
+    Populated when the query depth ≥ 1; null otherwise.
+    """
+    author: Author
+
+    """Raw list of category reference IDs – always present."""
+    categoryIds: [String!]
+
+    """
+    Resolved Category documents.
+    Populated when the query depth ≥ 1; null otherwise.
+    """
+    categories: [Category!]
+
+    createdAt: String
+}
+
+"""An author of blog posts."""
+type Author {
+    id: ID!
+    name: String!
+    email: String
+    bio: String
+}
+
+"""A taxonomy category that can be applied to posts."""
+type Category {
+    id: ID!
+    name: String!
+    description: String
+}
+
+input PostInput {
+    title: String!
+    content: String
+    authorId: String
+    categoryIds: [String!]
+}
+
+input AuthorInput {
+    name: String!
+    email: String
+    bio: String
+}
+
+input CategoryInput {
+    name: String!
+    description: String
+}

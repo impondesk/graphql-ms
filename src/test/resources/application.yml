@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: graphql-ms-test
+  graphql:
+    graphiql:
+      enabled: false
+    path: /graphql
+
+# Version of embedded MongoDB to download and start for tests
+de:
+  flapdoodle:
+    mongodb:
+      embedded:
+        version: 6.0.5
+
+logging:
+  level:
+    com.graphqlms: DEBUG
+    de.flapdoodle: WARN
