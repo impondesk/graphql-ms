@@ -1,0 +1,57 @@
+name: AI Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  security-check:
+    name: Claude Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic==0.88.0
+
+      - name: Generate diff
+        run: |
+          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr_diff.txt
+          echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
+
+      - name: Run Claude security analysis
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 .github/scripts/security_check.py < /tmp/pr_diff.txt > /tmp/security_output.txt
+
+      - name: Post security findings
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const findings = fs.readFileSync('/tmp/security_output.txt', 'utf8').trim();
+            if (!findings || findings.startsWith('No diff found')) {
+              core.info('Nothing to comment — diff was empty.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: `## 🔒 AI Security Analysis — Claude\n\n${findings}`,
+            });
