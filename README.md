@@ -17,6 +17,19 @@ A Spring Boot 3 microservice **POC / accelerator** that exposes a MongoDB-backed
 
 ---
 
+## 📚 Documentation
+
+Detailed documentation lives in the [`docs/`](docs/README.md) folder:
+
+| Document | Description |
+|---|---|
+| [Getting Started](docs/getting-started.md) | Prerequisites, running, building, and testing |
+| [Architecture](docs/architecture.md) | System design, module layout, and package structure |
+| [Depth Resolution](docs/depth-resolution.md) | The `@RelationField` + `DepthResolverService` accelerator pattern |
+| [GraphQL API Reference](docs/graphql-api.md) | Full schema, queries, mutations, and examples |
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
