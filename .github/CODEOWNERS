@@ -1,0 +1,8 @@
+# CODEOWNERS
+# Each line is a file pattern followed by one or more owners.
+# Owners will be required to review any pull request that modifies the matching files.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files in the repository.
+# At least one of these owners must approve any PR before it can be merged to main.
+* @impondesk
