@@ -75,10 +75,11 @@ blocking issues are found. Reports cover:
    Value: sk-ant-…
    ```
 
-2. Push code — all four agents will run automatically on every pull request.
-   The Lint & Dependency Check additionally **blocks merging** (via a failing
-   status check) on PRs targeting `main`, `master`, or `production` when a
-   `BLOCK` verdict is returned.
+2. Push code — the AI Code Review, Documentation Update, and Security Check
+   agents will run automatically on every pull request. The Lint &
+   Dependency Check runs on PRs targeting `main`, `master`, or
+   `production`, where it can **block merging** (via a failing status
+   check) when a `BLOCK` verdict is returned.
 
    To enforce the gate, enable branch protection on your production branch:
    ```
