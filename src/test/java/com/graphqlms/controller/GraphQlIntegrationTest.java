@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
  */
 @GraphQlTest({PostController.class, AuthorController.class, CategoryController.class})
 @Import(DepthResolverService.class)
-class GraphQlControllerTest {
+class GraphQlIntegrationTest {
 
     @Autowired
     private GraphQlTester graphQlTester;
