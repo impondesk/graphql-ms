@@ -30,7 +30,8 @@ jobs:
 
       - name: Generate diff
         run: |
-          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr_diff.txt
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > /tmp/pr_diff.txt
           echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
 
       - name: Run Claude code review

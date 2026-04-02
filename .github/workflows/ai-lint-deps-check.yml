@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
   pull-requests: write
 
 jobs:
@@ -33,10 +34,12 @@ jobs:
 
       - name: Generate diff
         run: |
-          git diff origin/${{ github.base_ref }}...HEAD > /tmp/pr_diff.txt
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > /tmp/pr_diff.txt
           echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
 
       - name: Run Claude lint & dependency check
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -44,20 +47,37 @@ jobs:
 
       - name: Parse verdict
         id: verdict
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
         run: |
-          output=$(cat /tmp/lint_output.txt)
-          if echo "$output" | grep -q "Verdict" && echo "$output" | grep -q "BLOCK"; then
-            echo "status=failure" >> "$GITHUB_OUTPUT"
-            echo "label=BLOCK — lint/dependency issues prevent merging" >> "$GITHUB_OUTPUT"
-          elif echo "$output" | grep -q "PASS WITH WARNINGS"; then
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "label=PASS WITH WARNINGS — review suggestions before merging" >> "$GITHUB_OUTPUT"
-          else
-            echo "status=success" >> "$GITHUB_OUTPUT"
-            echo "label=PASS — no lint or dependency issues found" >> "$GITHUB_OUTPUT"
-          fi
+          verdict=$(
+            awk '
+              $0 == "## Verdict" { in_verdict=1; next }
+              in_verdict && $0 ~ /[^[:space:]]/ { print; exit }
+            ' /tmp/lint_output.txt | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
+          )
+
+          case "$verdict" in
+            "BLOCK")
+              echo "status=failure" >> "$GITHUB_OUTPUT"
+              echo "label=BLOCK — lint/dependency issues prevent merging" >> "$GITHUB_OUTPUT"
+              ;;
+            "PASS WITH WARNINGS")
+              echo "status=success" >> "$GITHUB_OUTPUT"
+              echo "label=PASS WITH WARNINGS — review suggestions before merging" >> "$GITHUB_OUTPUT"
+              ;;
+            "PASS")
+              echo "status=success" >> "$GITHUB_OUTPUT"
+              echo "label=PASS — no lint or dependency issues found" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "status=failure" >> "$GITHUB_OUTPUT"
+              echo "label=BLOCK — unable to determine verdict from lint/dependency findings" >> "$GITHUB_OUTPUT"
+              echo "::error::Unrecognized or missing verdict: '$verdict'"
+              ;;
+          esac
 
       - name: Post lint & dependency findings
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
