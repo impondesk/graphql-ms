@@ -34,12 +34,14 @@ jobs:
           echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
 
       - name: Run Claude code review
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           python3 .github/scripts/code_review.py < /tmp/pr_diff.txt > /tmp/review_output.txt
 
       - name: Post review comment
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
