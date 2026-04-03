@@ -4,7 +4,7 @@ spring:
 
   data:
     mongodb:
-      uri: mongodb://localhost:27017/graphqlms
+      uri: ${MONGO_URL:mongodb://localhost:27017/graphqlms}
 
   graphql:
     graphiql:

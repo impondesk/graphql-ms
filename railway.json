@@ -1,0 +1,24 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "nixpacksPlan": {
+      "phases": {
+        "setup": {
+          "nixpkgs": ["#nixpkgs#", "jdk17", "maven"]
+        },
+        "build": {
+          "cmds": ["mvn clean package -DskipTests"]
+        }
+      },
+      "start": {
+        "command": "java -jar target/graphql-ms-0.0.1-SNAPSHOT.jar"
+      }
+    }
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  }
+}
