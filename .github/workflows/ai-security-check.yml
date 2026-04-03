@@ -1,0 +1,81 @@
+name: AI Security Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  security-check:
+    name: Claude Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install anthropic==0.88.0
+
+      - name: Generate diff
+        run: |
+          git fetch --no-tags origin ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+          git diff ${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }} > /tmp/pr_diff.txt
+          echo "Diff size: $(wc -c < /tmp/pr_diff.txt) bytes"
+
+      - name: Run Claude security analysis
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 .github/scripts/security_check.py < /tmp/pr_diff.txt > /tmp/security_output.txt
+
+      - name: Post security findings
+        if: ${{ secrets.ANTHROPIC_API_KEY != '' && github.event.pull_request.head.repo.fork == false }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const findings = fs.readFileSync('/tmp/security_output.txt', 'utf8').trim();
+            if (!findings || findings.startsWith('No diff found')) {
+              core.info('Nothing to comment — diff was empty.');
+              return;
+            }
+            const marker = '<!-- ai-security-check-comment -->';
+            const body = `${marker}\n## 🔒 AI Security Analysis — Claude\n\n${findings}`;
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existingComment = comments.find((comment) =>
+              typeof comment.body === 'string' && comment.body.includes(marker)
+            );
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
