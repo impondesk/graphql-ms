@@ -19,6 +19,11 @@
   "deploy": {
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
-    "restartPolicyMaxRetries": 10
+    "restartPolicyMaxRetries": 10,
+    "healthCheck": {
+      "path": "/actuator/health",
+      "interval": 30,
+      "timeout": 10
+    }
   }
 }
