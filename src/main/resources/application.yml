@@ -5,6 +5,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGO_URL:mongodb://localhost:27017/graphqlms}
+      auto-index: true
 
   graphql:
     graphiql:
@@ -13,8 +14,17 @@ spring:
     path: /graphql
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 logging:
   level:
     com.graphqlms: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
