@@ -1,0 +1,29 @@
+spring:
+  application:
+    name: graphql-ms
+
+  data:
+    mongodb:
+      uri: ${MONGO_URL}
+
+  graphql:
+    graphiql:
+      enabled: true
+    path: /graphql
+
+server:
+  port: ${PORT:8080}
+
+logging:
+  level:
+    com.graphqlms: DEBUG
+    org.springframework.data.mongodb: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
